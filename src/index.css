@@ -3,8 +3,16 @@
 @tailwind utilities;
 
 @layer base {
+  html {
+    font-size: 16px; /* force consistent base size */
+    -webkit-text-size-adjust: 100%; /* prevents iOS from auto-scaling */
+    text-size-adjust: 100%;
+  }
+
   body {
     @apply bg-dark-950 text-slate-100 font-body antialiased;
+    font-size: 1rem;
+    line-height: 1.5;
   }
 
   h1,
