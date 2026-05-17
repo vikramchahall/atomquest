@@ -7,7 +7,6 @@ const EMAIL_ROLE_MAP = {
   "employee@demo.com": "employee",
   "manager@demo.com": "manager",
   "admin@demo.com": "admin",
-
 };
 
 function deriveRole(email = "") {
@@ -25,24 +24,18 @@ export function AuthProvider({ children }) {
 
   useEffect(() => {
     let mounted = true;
-    console.log("[Auth] Starting init...");
 
     const init = async () => {
       try {
-        console.log("[Auth] Calling getSession...");
-        const { data: { session }, error } = await supabase.auth.getSession();
-        console.log("[Auth] getSession done. session:", !!session, "error:", error);
-
+        const { data: { session } } = await supabase.auth.getSession();
         if (!mounted) return;
-
         if (session?.user) {
           setUser(session.user);
           await fetchProfile(session.user);
         }
       } catch (err) {
-        console.error("[Auth] Init crashed:", err);
+        console.error("[Auth] Init error:", err);
       } finally {
-        console.log("[Auth] Setting loading = false");
         if (mounted) setLoading(false);
       }
     };
@@ -52,7 +45,6 @@ export function AuthProvider({ children }) {
     const { data: listener } = supabase.auth.onAuthStateChange(
       async (_event, session) => {
         if (!mounted) return;
-        console.log("[Auth] onAuthStateChange:", _event);
 
         if (_event === "SIGNED_OUT") {
           setUser(null);
@@ -60,9 +52,15 @@ export function AuthProvider({ children }) {
           return;
         }
 
+        // Only act on SIGNED_IN if it's a different user than what we have
         if (_event === "SIGNED_IN" && session?.user) {
-          setUser(session.user);
-          fetchProfile(session.user);
+          setUser(prev => {
+            if (prev?.id !== session.user.id) {
+              // Different user — fetch their profile
+              fetchProfile(session.user);
+            }
+            return session.user;
+          });
           return;
         }
 
@@ -80,18 +78,17 @@ export function AuthProvider({ children }) {
 
   async function fetchProfile(authUser) {
     try {
-      console.log("[Auth] fetchProfile for:", authUser.email);
       const { data, error } = await supabase
         .from("profiles")
         .select("*")
         .eq("id", authUser.id)
         .maybeSingle();
 
-      console.log("[Auth] Profile result:", data, error);
+      if (error) console.error("[Auth] Profile fetch error:", error);
 
       if (data) {
         setProfile(data);
-        return;
+        return data;
       }
 
       const fallback = {
@@ -108,16 +105,19 @@ export function AuthProvider({ children }) {
 
       await supabase.from("profiles").upsert(fallback, { onConflict: "id" });
       setProfile(fallback);
+      return fallback;
     } catch (err) {
       console.error("[Auth] fetchProfile error:", err);
-      setProfile({
+      const fallback = {
         id: authUser.id,
         email: authUser.email,
         full_name: authUser.email.split("@")[0],
         role: deriveRole(authUser.email),
         manager_id: null,
         department: null,
-      });
+      };
+      setProfile(fallback);
+      return fallback;
     }
   }
 

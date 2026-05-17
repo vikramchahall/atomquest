@@ -4,6 +4,7 @@ import { supabase } from "../../lib/supabase";
 import StatusBadge from "../../components/StatusBadge";
 import toast from "react-hot-toast";
 import { CheckCircle, XCircle, Edit2, Save, Info, Users } from "lucide-react";
+import { triggerNotification } from "../../lib/notify";
 
 export default function ApproveGoals() {
   const { profile } = useAuth();
@@ -53,40 +54,92 @@ export default function ApproveGoals() {
     setLoading(false);
   }
 
-  async function approveGoal(goalId) {
-    const { error } = await supabase.from("goals").update({
-      approval_status: "Approved",
-      locked: true,
-      approved_at: new Date().toISOString(),
-    }).eq("id", goalId);
-    if (error) return toast.error("Failed to approve. " + error.message);
-    await supabase.from("audit_logs").insert({
-      user_id: profile.id,
-      action: "GOAL_APPROVED",
-      entity: "goals",
-      entity_id: goalId,
-      details: `Goal approved and locked by ${profile.full_name}`,
+async function approveGoal(goalId) {
+  const goal = pendingGoals.find((g) => g.id === goalId);
+
+  const { error } = await supabase.from("goals").update({
+    approval_status: "Approved",
+    locked: true,
+    approved_at: new Date().toISOString(),
+  }).eq("id", goalId);
+
+  if (error)
+    return toast.error("Failed to approve. " + error.message);
+
+  await supabase.from("audit_logs").insert({
+    user_id: profile.id,
+    action: "GOAL_APPROVED",
+    entity: "goals",
+    entity_id: goalId,
+    details: `Goal approved and locked by ${profile.full_name}`,
+  });
+
+  toast.success("Goal approved and locked!");
+
+  // Notify employee
+  const { data: emp } = await supabase
+    .from("profiles")
+    .select("id, email, full_name")
+    .eq("id", goal.employee_id)
+    .single();
+
+  if (emp) {
+    triggerNotification({
+      recipientId: emp.id,
+      recipientEmail: emp.email,
+      recipientName: emp.full_name,
+      eventType: "goal_approved",
+      employeeName: emp.full_name,
+      link: "/my-goals",
     });
-    toast.success("Goal approved and locked!");
-    loadGoals();
   }
 
-  async function rejectGoal(goalId) {
-    const note = window.prompt("Reason for returning (optional):") || "Returned for rework by manager";
-    await supabase.from("goals").update({
-      approval_status: "Draft",
-      rejection_note: note,
-    }).eq("id", goalId);
-    await supabase.from("audit_logs").insert({
-      user_id: profile.id,
-      action: "GOAL_REJECTED",
-      entity: "goals",
-      entity_id: goalId,
-      details: `Goal returned for rework: "${note}" — by ${profile.full_name}`,
+  loadGoals();
+}
+
+async function rejectGoal(goalId) {
+  const goal = pendingGoals.find((g) => g.id === goalId);
+
+  const note =
+    window.prompt("Reason for returning (optional):") ||
+    "Returned for rework by manager";
+
+  await supabase.from("goals").update({
+    approval_status: "Draft",
+    rejection_note: note,
+  }).eq("id", goalId);
+
+  await supabase.from("audit_logs").insert({
+    user_id: profile.id,
+    action: "GOAL_REJECTED",
+    entity: "goals",
+    entity_id: goalId,
+    details: `Goal returned for rework: "${note}" — by ${profile.full_name}`,
+  });
+
+  toast("Goal returned to employee for rework", { icon: "↩️" });
+
+  // Notify employee
+  const { data: emp } = await supabase
+    .from("profiles")
+    .select("id, email, full_name")
+    .eq("id", goal.employee_id)
+    .single();
+
+  if (emp) {
+    triggerNotification({
+      recipientId: emp.id,
+      recipientEmail: emp.email,
+      recipientName: emp.full_name,
+      eventType: "goal_rejected",
+      employeeName: emp.full_name,
+      note: note,
+      link: "/my-goals",
     });
-    toast("Goal returned to employee for rework", { icon: "↩️" });
-    loadGoals();
   }
+
+  loadGoals();
+}
 
   async function saveEdit(goalId) {
     const ed = editing[goalId];
