@@ -6,6 +6,7 @@ import ProgressBar from "../../components/ProgressBar";
 import toast from "react-hot-toast";
 import { computeScore, STATUS_OPTIONS, getCurrentQuarter } from "../../lib/utils";
 import { Save, Info, Lock } from "lucide-react";
+import { triggerNotification } from "../../lib/notify";
 
 export default function QuarterlyUpdate() {
   const { profile } = useAuth();
@@ -41,36 +42,71 @@ export default function QuarterlyUpdate() {
     setUpdates((prev) => ({ ...prev, [goalId]: { ...prev[goalId], [field]: value } }));
   }
 
-  async function saveUpdates() {
-    setSaving(true);
-    let hasError = false;
-    for (const goalId of Object.keys(updates)) {
-      const upd = updates[goalId];
-      const { error: ge } = await supabase.from("goals").update({
-        actual_achievement: upd.actual_achievement,
-        status: upd.status,
-      }).eq("id", goalId);
-      if (ge) { hasError = true; continue; }
+ async function saveUpdates() {
+  setSaving(true);
 
-      await supabase.from("quarterly_checkins").upsert({
-        goal_id: goalId,
-        employee_id: profile.id,
-        quarter,
-        actual_achievement: upd.actual_achievement,
-        status: upd.status,
-      }, { onConflict: "goal_id,employee_id,quarter" });
+  let hasError = false;
+
+  for (const goalId of Object.keys(updates)) {
+    const upd = updates[goalId];
+
+    const { error: ge } = await supabase.from("goals").update({
+      actual_achievement: upd.actual_achievement,
+      status: upd.status,
+    }).eq("id", goalId);
+
+    if (ge) {
+      hasError = true;
+      continue;
     }
-    await supabase.from("audit_logs").insert({
-      user_id: profile.id,
-      action: "QUARTERLY_UPDATE",
-      entity: "quarterly_checkins",
-      details: `${quarter} achievement update submitted by ${profile.full_name}`,
-    });
-    if (hasError) toast.error("Some updates failed. Please try again.");
-    else toast.success(`${quarter} update saved! Your manager can now review your progress.`);
-    setSaving(false);
-    loadGoals();
+
+    await supabase.from("quarterly_checkins").upsert({
+      goal_id: goalId,
+      employee_id: profile.id,
+      quarter,
+      actual_achievement: upd.actual_achievement,
+      status: upd.status,
+    }, { onConflict: "goal_id,employee_id,quarter" });
   }
+
+  await supabase.from("audit_logs").insert({
+    user_id: profile.id,
+    action: "QUARTERLY_UPDATE",
+    entity: "quarterly_checkins",
+    details: `${quarter} achievement update submitted by ${profile.full_name}`,
+  });
+
+  if (hasError) {
+    toast.error("Some updates failed. Please try again.");
+  } else {
+    toast.success(
+      `${quarter} update saved! Your manager can now review your progress.`
+    );
+
+    // Notify manager
+    if (profile.manager_id) {
+      const { data: mgr } = await supabase
+        .from("profiles")
+        .select("id, email, full_name")
+        .eq("id", profile.manager_id)
+        .single();
+
+      if (mgr) {
+        triggerNotification({
+          recipientId: mgr.id,
+          recipientEmail: mgr.email,
+          recipientName: mgr.full_name,
+          eventType: "checkin_done",
+          employeeName: profile.full_name,
+          link: "/team",
+        });
+      }
+    }
+  }
+
+  setSaving(false);
+  loadGoals();
+}
 
   if (loading) return <div className="flex justify-center py-20"><div className="w-8 h-8 border-2 border-brand-500 border-t-transparent rounded-full animate-spin" /></div>;
 

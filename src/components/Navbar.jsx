@@ -1,8 +1,9 @@
 import React from "react";
-import { Menu, Bell, LogOut } from "lucide-react";
+import { Menu, LogOut } from "lucide-react";
 import { useAuth } from "../context/AuthContext";
 import { useNavigate } from "react-router-dom";
 import { getCurrentQuarter } from "../lib/utils";
+import NotificationBell from "./NotificationBell";
 
 export default function Navbar({ onToggleSidebar }) {
   const { profile, signOut } = useAuth();
@@ -29,21 +30,25 @@ export default function Navbar({ onToggleSidebar }) {
           {quarter} Active
         </div>
       </div>
+
       <div className="flex items-center gap-4">
-        <button className="relative text-slate-400 hover:text-slate-100 transition-colors">
-          <Bell size={18} />
-          <span className="absolute -top-1 -right-1 w-2 h-2 bg-accent-500 rounded-full" />
-        </button>
+        {/* Real notification bell */}
+        <NotificationBell />
+
         <div className="flex items-center gap-3 pl-4 border-l border-slate-800">
           <div className="text-right hidden sm:block">
             <p className="text-sm font-display font-600 text-slate-100 leading-none">
               {profile?.full_name || "User"}
             </p>
-            <p className="text-xs text-slate-500 mt-0.5 capitalize">{profile?.role}</p>
+            <p className="text-xs text-slate-500 mt-0.5 capitalize">
+              {profile?.role}
+            </p>
           </div>
+
           <div className="w-8 h-8 rounded-full bg-gradient-to-br from-brand-500 to-accent-500 flex items-center justify-center text-white text-xs font-display font-700">
             {profile?.full_name?.[0] || "U"}
           </div>
+
           <button
             onClick={handleSignOut}
             className="text-slate-500 hover:text-red-400 transition-colors"
