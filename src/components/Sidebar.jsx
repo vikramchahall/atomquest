@@ -1,4 +1,4 @@
-import React from "react";
+import React from "react"; 
 import { NavLink } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import clsx from "clsx";
@@ -15,6 +15,7 @@ import {
   Calendar,
   UserCog,
   Zap,
+  AlertTriangle,
 } from "lucide-react";
 
 const employeeLinks = [
@@ -39,6 +40,7 @@ const adminLinks = [
   { to: "/cycles", icon: Calendar, label: "Cycle Manager" },
   { to: "/analytics", icon: BarChart3, label: "Analytics" },
   { to: "/audit", icon: Settings, label: "Audit Trail" },
+  { to: "/escalations", icon: AlertTriangle, label: "Escalations" },
 ];
 
 export default function Sidebar({ open }) {
