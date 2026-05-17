@@ -1,72 +1,86 @@
-import React, { useEffect, useState, useRef } from "react";
+import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "../lib/supabase";
 import { getRoleFromEmail } from "../lib/azure";
-import { Zap } from "lucide-react";
+import Logo from "../components/Logo";
 
 export default function AuthCallback() {
   const navigate = useNavigate();
-  const [status, setStatus] = useState("Completing sign in...");
+  const [status, setStatus] = useState("Processing sign in...");
   const [errorMsg, setErrorMsg] = useState(null);
-  const ran = useRef(false);
 
   useEffect(() => {
-    if (ran.current) return;
-    ran.current = true;
     handleCallback();
   }, []);
 
   async function handleCallback() {
     try {
+      const hashParams = new URLSearchParams(window.location.hash.replace("#", ""));
       const searchParams = new URLSearchParams(window.location.search);
-      const errorParam = searchParams.get("error");
-      const errorDesc = searchParams.get("error_description");
+
+      const accessToken = hashParams.get("access_token");
+      const refreshToken = hashParams.get("refresh_token");
+      const code = searchParams.get("code");
+      const errorParam = searchParams.get("error") || hashParams.get("error");
+      const errorDesc = searchParams.get("error_description") || hashParams.get("error_description");
 
       if (errorParam) {
         setErrorMsg(`Sign in failed: ${errorDesc || errorParam}`);
-        setTimeout(() => navigate("/login", { replace: true }), 3000);
+        setTimeout(() => navigate("/login"), 3000);
         return;
       }
 
-      // With Web platform in Azure, Supabase exchanges the code
-      // server-side and sets the session before redirecting here.
-      // We just need to read the existing session.
-      setStatus("Reading session...");
+      let session = null;
 
-      // Give Supabase a moment to finish setting the session
-      await new Promise((r) => setTimeout(r, 1000));
-
-      const { data: { session }, error } = await supabase.auth.getSession();
-
-      if (error || !session) {
-        console.error("No session:", error);
-        setErrorMsg("Session not found. Please sign in again.");
-        setTimeout(() => navigate("/login", { replace: true }), 3000);
-        return;
+      if (accessToken && refreshToken) {
+        setStatus("Setting up session...");
+        const { data, error } = await supabase.auth.setSession({ access_token: accessToken, refresh_token: refreshToken });
+        if (error || !data?.session) {
+          setErrorMsg("Could not establish session. Please try again.");
+          setTimeout(() => navigate("/login"), 3000);
+          return;
+        }
+        session = data.session;
+      } else if (code) {
+        setStatus("Exchanging authorization code...");
+        const { data, error } = await supabase.auth.exchangeCodeForSession(code);
+        if (error || !data?.session) {
+          setErrorMsg("Could not exchange code. Please try again.");
+          setTimeout(() => navigate("/login"), 3000);
+          return;
+        }
+        session = data.session;
+      } else {
+        setStatus("Checking session...");
+        await new Promise((r) => setTimeout(r, 1000));
+        const { data, error } = await supabase.auth.getSession();
+        if (error || !data?.session) {
+          setErrorMsg("No session found. Please sign in again.");
+          setTimeout(() => navigate("/login"), 3000);
+          return;
+        }
+        session = data.session;
       }
 
-      setStatus("Setting up your profile...");
       const user = session.user;
-      const role = getRoleFromEmail(user.email);
+      setStatus("Setting up your profile...");
 
+      const role = getRoleFromEmail(user.email);
       await supabase.from("profiles").upsert({
         id: user.id,
         email: user.email,
-        full_name:
-          user.user_metadata?.full_name ||
-          user.user_metadata?.name ||
-          user.email.split("@")[0],
+        full_name: user.user_metadata?.full_name || user.user_metadata?.name || user.user_metadata?.preferred_username || user.email.split("@")[0],
         role,
         department: user.user_metadata?.department || null,
       }, { onConflict: "id" });
 
       setStatus("Done! Taking you to the dashboard...");
+      await new Promise((r) => setTimeout(r, 300));
       navigate("/", { replace: true });
-
     } catch (err) {
       console.error("Callback error:", err);
       setErrorMsg("Something went wrong. Please try again.");
-      setTimeout(() => navigate("/login", { replace: true }), 3000);
+      setTimeout(() => navigate("/login"), 3000);
     }
   }
 
@@ -76,10 +90,11 @@ export default function AuthCallback() {
         <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-brand-500/5 rounded-full blur-3xl" />
         <div className="absolute bottom-1/4 right-1/4 w-96 h-96 bg-accent-500/5 rounded-full blur-3xl" />
       </div>
+
       <div className="card max-w-sm w-full text-center py-12 space-y-6 relative">
-        <div className="inline-flex w-14 h-14 rounded-2xl bg-gradient-to-br from-brand-500 to-accent-500 items-center justify-center mx-auto shadow-lg shadow-brand-500/25">
-          <Zap size={26} className="text-white" />
-        </div>
+
+        {/* LOGO */}
+        <Logo size={56} className="rounded-2xl mx-auto shadow-lg" />
 
         {errorMsg ? (
           <div className="space-y-3">
