@@ -3,6 +3,21 @@ import { supabase } from "../lib/supabase";
 
 const AuthContext = createContext({});
 
+const EMAIL_ROLE_MAP = {
+  "employee@demo.com": "employee",
+  "manager@demo.com": "manager",
+  "admin@demo.com": "admin",
+
+};
+
+function deriveRole(email = "") {
+  const e = email.toLowerCase();
+  if (EMAIL_ROLE_MAP[e]) return EMAIL_ROLE_MAP[e];
+  if (e.includes("admin") || e.includes("hr")) return "admin";
+  if (e.includes("manager") || e.includes("lead")) return "manager";
+  return "employee";
+}
+
 export function AuthProvider({ children }) {
   const [user, setUser] = useState(null);
   const [profile, setProfile] = useState(null);
@@ -10,36 +25,52 @@ export function AuthProvider({ children }) {
 
   useEffect(() => {
     let mounted = true;
+    console.log("[Auth] Starting init...");
 
-    // Get initial session ONCE
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      if (!mounted) return;
-      if (session?.user) {
-        setUser(session.user);
-        fetchProfile(session.user).then(() => {
-          if (mounted) setLoading(false);
-        });
-      } else {
-        setLoading(false);
-      }
-    }).catch(() => {
-      if (mounted) setLoading(false);
-    });
+    const init = async () => {
+      try {
+        console.log("[Auth] Calling getSession...");
+        const { data: { session }, error } = await supabase.auth.getSession();
+        console.log("[Auth] getSession done. session:", !!session, "error:", error);
 
-    // Listen for changes but NEVER set loading=true here
-    const { data: listener } = supabase.auth.onAuthStateChange((_event, session) => {
-      if (!mounted) return;
-      if (_event === "SIGNED_OUT") {
-        setUser(null);
-        setProfile(null);
-        // loading stays false
-        return;
+        if (!mounted) return;
+
+        if (session?.user) {
+          setUser(session.user);
+          await fetchProfile(session.user);
+        }
+      } catch (err) {
+        console.error("[Auth] Init crashed:", err);
+      } finally {
+        console.log("[Auth] Setting loading = false");
+        if (mounted) setLoading(false);
       }
-      if (_event === "SIGNED_IN" && session?.user) {
-        setUser(session.user);
-        fetchProfile(session.user);
+    };
+
+    init();
+
+    const { data: listener } = supabase.auth.onAuthStateChange(
+      async (_event, session) => {
+        if (!mounted) return;
+        console.log("[Auth] onAuthStateChange:", _event);
+
+        if (_event === "SIGNED_OUT") {
+          setUser(null);
+          setProfile(null);
+          return;
+        }
+
+        if (_event === "SIGNED_IN" && session?.user) {
+          setUser(session.user);
+          fetchProfile(session.user);
+          return;
+        }
+
+        if (_event === "TOKEN_REFRESHED" && session?.user) {
+          setUser(session.user);
+        }
       }
-    });
+    );
 
     return () => {
       mounted = false;
@@ -49,35 +80,41 @@ export function AuthProvider({ children }) {
 
   async function fetchProfile(authUser) {
     try {
-      const { data } = await supabase
+      console.log("[Auth] fetchProfile for:", authUser.email);
+      const { data, error } = await supabase
         .from("profiles")
         .select("*")
         .eq("id", authUser.id)
         .maybeSingle();
+
+      console.log("[Auth] Profile result:", data, error);
 
       if (data) {
         setProfile(data);
         return;
       }
 
-      // No profile row — create one
       const fallback = {
         id: authUser.id,
         email: authUser.email,
-        full_name: authUser.user_metadata?.full_name || authUser.email.split("@")[0],
-        role: authUser.user_metadata?.role || "employee",
+        full_name:
+          authUser.user_metadata?.full_name ||
+          authUser.user_metadata?.name ||
+          authUser.email.split("@")[0],
+        role: deriveRole(authUser.email),
         manager_id: null,
         department: null,
       };
+
       await supabase.from("profiles").upsert(fallback, { onConflict: "id" });
       setProfile(fallback);
     } catch (err) {
-      console.error("fetchProfile:", err);
+      console.error("[Auth] fetchProfile error:", err);
       setProfile({
         id: authUser.id,
         email: authUser.email,
         full_name: authUser.email.split("@")[0],
-        role: "employee",
+        role: deriveRole(authUser.email),
         manager_id: null,
         department: null,
       });
@@ -100,7 +137,9 @@ export function AuthProvider({ children }) {
   }
 
   return (
-    <AuthContext.Provider value={{ user, profile, loading, signIn, signOut, fetchProfile }}>
+    <AuthContext.Provider
+      value={{ user, profile, loading, signIn, signOut, fetchProfile }}
+    >
       {children}
     </AuthContext.Provider>
   );

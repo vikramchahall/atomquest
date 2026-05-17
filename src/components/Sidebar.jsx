@@ -1,21 +1,12 @@
-import React from "react"; 
+import React from "react";
+import Logo from "../components/Logo";
 import { NavLink } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import clsx from "clsx";
 import {
-  LayoutDashboard,
-  Target,
-  PlusCircle,
-  ClipboardCheck,
-  Users,
-  CheckSquare,
-  Settings,
-  BarChart3,
-  Shield,
-  Calendar,
-  UserCog,
-  Zap,
-  AlertTriangle,
+  LayoutDashboard, Target, PlusCircle, ClipboardCheck,
+  Users, CheckSquare, Settings, BarChart3, Shield,
+  Calendar, UserCog, AlertTriangle,
 } from "lucide-react";
 
 const employeeLinks = [
@@ -46,8 +37,7 @@ const adminLinks = [
 export default function Sidebar({ open }) {
   const { profile } = useAuth();
   const role = profile?.role || "employee";
-  const links =
-    role === "admin" ? adminLinks : role === "manager" ? managerLinks : employeeLinks;
+  const links = role === "admin" ? adminLinks : role === "manager" ? managerLinks : employeeLinks;
 
   return (
     <aside
@@ -57,9 +47,8 @@ export default function Sidebar({ open }) {
       )}
     >
       <div className="p-6 border-b border-slate-800 flex items-center gap-3">
-        <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-brand-500 to-accent-500 flex items-center justify-center">
-          <Zap size={18} className="text-white" />
-        </div>
+        {/* LOGO */}
+        <Logo size={36} className="rounded-xl" />
         <div>
           <p className="font-display font-700 text-sm text-slate-100">AtomQuest</p>
           <p className="text-xs text-slate-500">Goal Portal</p>
@@ -75,9 +64,7 @@ export default function Sidebar({ open }) {
             key={to}
             to={to}
             end={end}
-            className={({ isActive }) =>
-              clsx("sidebar-link", isActive && "active")
-            }
+            className={({ isActive }) => clsx("sidebar-link", isActive && "active")}
           >
             <Icon size={16} />
             <span>{label}</span>
