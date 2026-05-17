@@ -73,3 +73,52 @@ A web-based platform to digitize employee goal management, approvals, quarterly 
 ## Setup
 
 ```bash
+npm install
+npm run dev
+```
+
+Create `.env.local`:
+```env
+VITE_SUPABASE_URL=your_supabase_url
+VITE_SUPABASE_ANON_KEY=your_supabase_anon_key
+```
+
+Run `supabase/schema.sql` in Supabase SQL Editor.
+
+---
+
+## Project Structure
+atomquest/
+├── supabase/
+│   └── schema.sql
+├── src/
+│   ├── components/       # Layout, Sidebar, Navbar, GoalCard, NotificationBell
+│   ├── context/          # AuthContext (session management)
+│   ├── lib/              # supabase.js, azure.js, notify.js, utils.js
+│   ├── pages/
+│   │   ├── Login.jsx
+│   │   ├── AuthCallback.jsx
+│   │   ├── Dashboard.jsx
+│   │   ├── employee/     # MyGoals, CreateGoal, QuarterlyUpdate
+│   │   ├── manager/      # TeamDashboard, ApproveGoals, CheckIn
+│   │   └── admin/        # AdminDashboard, Analytics, Escalations, AuditTrail, CycleManager, UserManager
+│   ├── App.jsx
+│   └── main.jsx
+
+---
+
+## Notification System
+
+| Channel | Status | Trigger |
+|---------|--------|---------|
+| In-app Bell | ✅ Live | Goal submitted, approved, rejected, check-in done |
+| Email (Resend) | ⚙️ Ready | Requires verified sending domain |
+| Teams Webhook | ⚙️ Ready | Requires Teams channel webhook URL |
+
+---
+
+## Deployment
+
+Hosted on Vercel. `vercel.json` includes SPA rewrites.
+Auto-deploys on every `git push` to `main`.
+Environment variables configured in Vercel dashboard.
