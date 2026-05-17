@@ -8,6 +8,7 @@ import {
 import { AuthProvider, useAuth } from "./context/AuthContext";
 import Layout from "./components/Layout";
 import Login from "./pages/Login";
+import AuthCallback from "./pages/AuthCallback";
 import Dashboard from "./pages/Dashboard";
 import MyGoals from "./pages/employee/MyGoals";
 import CreateGoal from "./pages/employee/CreateGoal";
@@ -20,24 +21,36 @@ import CycleManager from "./pages/admin/CycleManager";
 import UserManager from "./pages/admin/UserManager";
 import AuditTrail from "./pages/admin/AuditTrail";
 import Analytics from "./pages/admin/Analytics";
+import Escalations from "./pages/admin/Escalations";
+
+function Spinner() {
+  return (
+    <div className="flex items-center justify-center h-screen bg-dark-950">
+      <div className="text-center space-y-3">
+        <div className="w-8 h-8 border-2 border-brand-500 border-t-transparent rounded-full animate-spin mx-auto" />
+        <p className="text-slate-600 font-body text-xs">Loading...</p>
+      </div>
+    </div>
+  );
+}
 
 function ProtectedRoute({ children, roles }) {
   const { user, profile, loading } = useAuth();
-  if (loading)
-    return (
-      <div className="flex items-center justify-center h-screen">
-        <div className="w-8 h-8 border-2 border-brand-500 border-t-transparent rounded-full animate-spin" />
-      </div>
-    );
+  if (loading) return <Spinner />;
   if (!user) return <Navigate to="/login" replace />;
-  if (roles && !roles.includes(profile?.role)) return <Navigate to="/" replace />;
+  if (roles && profile && !roles.includes(profile.role))
+    return <Navigate to="/" replace />;
   return children;
 }
 
 function AppRoutes() {
   return (
     <Routes>
+      {/* Public */}
       <Route path="/login" element={<Login />} />
+      <Route path="/auth/callback" element={<AuthCallback />} />
+
+      {/* Protected shell */}
       <Route
         path="/"
         element={
@@ -47,6 +60,7 @@ function AppRoutes() {
         }
       >
         <Route index element={<Dashboard />} />
+
         {/* Employee */}
         <Route
           path="my-goals"
@@ -72,6 +86,7 @@ function AppRoutes() {
             </ProtectedRoute>
           }
         />
+
         {/* Manager */}
         <Route
           path="team"
@@ -97,6 +112,7 @@ function AppRoutes() {
             </ProtectedRoute>
           }
         />
+
         {/* Admin */}
         <Route
           path="admin"
@@ -131,6 +147,16 @@ function AppRoutes() {
           }
         />
         <Route
+          path="escalations"
+          element={
+            <ProtectedRoute roles={["admin"]}>
+              <Escalations />
+            </ProtectedRoute>
+          }
+        />
+
+        {/* Shared */}
+        <Route
           path="analytics"
           element={
             <ProtectedRoute roles={["admin", "manager"]}>
@@ -139,6 +165,8 @@ function AppRoutes() {
           }
         />
       </Route>
+
+      <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>
   );
 }
