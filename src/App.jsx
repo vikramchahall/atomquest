@@ -1,10 +1,5 @@
-import React from "react";
-import {
-  BrowserRouter as Router,
-  Routes,
-  Route,
-  Navigate,
-} from "react-router-dom";
+import React, { useEffect, useState } from "react";
+import { BrowserRouter as Router, Routes, Route, Navigate } from "react-router-dom";
 import { AuthProvider, useAuth } from "./context/AuthContext";
 import Layout from "./components/Layout";
 import Login from "./pages/Login";
@@ -21,16 +16,19 @@ import UserManager from "./pages/admin/UserManager";
 import AuditTrail from "./pages/admin/AuditTrail";
 import Analytics from "./pages/admin/Analytics";
 
+function Spinner() {
+  return (
+    <div className="flex items-center justify-center h-screen">
+      <div className="w-8 h-8 border-2 border-brand-500 border-t-transparent rounded-full animate-spin" />
+    </div>
+  );
+}
+
 function ProtectedRoute({ children, roles }) {
   const { user, profile, loading } = useAuth();
-  if (loading)
-    return (
-      <div className="flex items-center justify-center h-screen">
-        <div className="w-8 h-8 border-2 border-brand-500 border-t-transparent rounded-full animate-spin" />
-      </div>
-    );
+  if (loading) return <Spinner />;
   if (!user) return <Navigate to="/login" replace />;
-  if (roles && !roles.includes(profile?.role)) return <Navigate to="/" replace />;
+  if (roles && profile && !roles.includes(profile.role)) return <Navigate to="/" replace />;
   return children;
 }
 
@@ -38,106 +36,19 @@ function AppRoutes() {
   return (
     <Routes>
       <Route path="/login" element={<Login />} />
-      <Route
-        path="/"
-        element={
-          <ProtectedRoute>
-            <Layout />
-          </ProtectedRoute>
-        }
-      >
+      <Route path="/" element={<ProtectedRoute><Layout /></ProtectedRoute>}>
         <Route index element={<Dashboard />} />
-        {/* Employee */}
-        <Route
-          path="my-goals"
-          element={
-            <ProtectedRoute roles={["employee", "manager", "admin"]}>
-              <MyGoals />
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path="create-goal"
-          element={
-            <ProtectedRoute roles={["employee", "manager"]}>
-              <CreateGoal />
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path="quarterly-update"
-          element={
-            <ProtectedRoute roles={["employee", "manager"]}>
-              <QuarterlyUpdate />
-            </ProtectedRoute>
-          }
-        />
-        {/* Manager */}
-        <Route
-          path="team"
-          element={
-            <ProtectedRoute roles={["manager", "admin"]}>
-              <TeamDashboard />
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path="approve"
-          element={
-            <ProtectedRoute roles={["manager", "admin"]}>
-              <ApproveGoals />
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path="checkin/:employeeId"
-          element={
-            <ProtectedRoute roles={["manager", "admin"]}>
-              <CheckIn />
-            </ProtectedRoute>
-          }
-        />
-        {/* Admin */}
-        <Route
-          path="admin"
-          element={
-            <ProtectedRoute roles={["admin"]}>
-              <AdminDashboard />
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path="cycles"
-          element={
-            <ProtectedRoute roles={["admin"]}>
-              <CycleManager />
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path="users"
-          element={
-            <ProtectedRoute roles={["admin"]}>
-              <UserManager />
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path="audit"
-          element={
-            <ProtectedRoute roles={["admin"]}>
-              <AuditTrail />
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path="analytics"
-          element={
-            <ProtectedRoute roles={["admin", "manager"]}>
-              <Analytics />
-            </ProtectedRoute>
-          }
-        />
+        <Route path="my-goals" element={<ProtectedRoute roles={["employee","manager","admin"]}><MyGoals /></ProtectedRoute>} />
+        <Route path="create-goal" element={<ProtectedRoute roles={["employee","manager"]}><CreateGoal /></ProtectedRoute>} />
+        <Route path="quarterly-update" element={<ProtectedRoute roles={["employee","manager"]}><QuarterlyUpdate /></ProtectedRoute>} />
+        <Route path="team" element={<ProtectedRoute roles={["manager","admin"]}><TeamDashboard /></ProtectedRoute>} />
+        <Route path="approve" element={<ProtectedRoute roles={["manager","admin"]}><ApproveGoals /></ProtectedRoute>} />
+        <Route path="checkin/:employeeId" element={<ProtectedRoute roles={["manager","admin"]}><CheckIn /></ProtectedRoute>} />
+        <Route path="admin" element={<ProtectedRoute roles={["admin"]}><AdminDashboard /></ProtectedRoute>} />
+        <Route path="cycles" element={<ProtectedRoute roles={["admin"]}><CycleManager /></ProtectedRoute>} />
+        <Route path="users" element={<ProtectedRoute roles={["admin"]}><UserManager /></ProtectedRoute>} />
+        <Route path="audit" element={<ProtectedRoute roles={["admin"]}><AuditTrail /></ProtectedRoute>} />
+        <Route path="analytics" element={<ProtectedRoute roles={["admin","manager"]}><Analytics /></ProtectedRoute>} />
       </Route>
     </Routes>
   );

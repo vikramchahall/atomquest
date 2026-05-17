@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import toast from "react-hot-toast";
@@ -7,40 +7,41 @@ import { Zap, Eye, EyeOff } from "lucide-react";
 export default function Login() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [loading, setLoading] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
   const [showPw, setShowPw] = useState(false);
-  const { signIn } = useAuth();
+  const { signIn, user } = useAuth();
   const navigate = useNavigate();
+
+  // If already logged in, redirect
+  useEffect(() => {
+    if (user) navigate("/", { replace: true });
+  }, [user]);
 
   const handleLogin = async (e) => {
     e.preventDefault();
-    setLoading(true);
+    setSubmitting(true);
     const { error } = await signIn(email, password);
     if (error) {
-      toast.error(error.message);
-    } else {
-      toast.success("Welcome back!");
-      navigate("/");
+      toast.error(error.message || "Sign in failed. Check your email and password.");
+      setSubmitting(false);
     }
-    setLoading(false);
+    // On success, onAuthStateChange fires → sets user → useEffect above redirects
   };
 
   const demoLogins = [
-    { label: "Employee Demo", email: "employee@demo.com", password: "demo1234" },
-    { label: "Manager Demo", email: "manager@demo.com", password: "demo1234" },
-    { label: "Admin Demo", email: "admin@demo.com", password: "demo1234" },
+    { label: "Employee", email: "employee@demo.com", password: "demo1234" },
+    { label: "Manager", email: "manager@demo.com", password: "demo1234" },
+    { label: "Admin", email: "admin@demo.com", password: "demo1234" },
   ];
 
   return (
     <div className="min-h-screen bg-dark-950 flex items-center justify-center p-4">
-      {/* Background decoration */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
         <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-brand-500/5 rounded-full blur-3xl" />
         <div className="absolute bottom-1/4 right-1/4 w-96 h-96 bg-accent-500/5 rounded-full blur-3xl" />
       </div>
 
       <div className="w-full max-w-md relative">
-        {/* Logo */}
         <div className="text-center mb-10">
           <div className="inline-flex w-14 h-14 rounded-2xl bg-gradient-to-br from-brand-500 to-accent-500 items-center justify-center mb-4 shadow-lg shadow-brand-500/25">
             <Zap size={26} className="text-white" />
@@ -61,6 +62,7 @@ export default function Login() {
                 placeholder="you@company.com"
                 className="input-field"
                 required
+                disabled={submitting}
               />
             </div>
             <div>
@@ -73,6 +75,7 @@ export default function Login() {
                   placeholder="••••••••"
                   className="input-field pr-10"
                   required
+                  disabled={submitting}
                 />
                 <button
                   type="button"
@@ -85,13 +88,13 @@ export default function Login() {
             </div>
             <button
               type="submit"
-              disabled={loading}
+              disabled={submitting}
               className="btn-primary w-full flex items-center justify-center gap-2 mt-2"
             >
-              {loading && (
+              {submitting && (
                 <span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
               )}
-              {loading ? "Signing in..." : "Sign In"}
+              {submitting ? "Signing in..." : "Sign In"}
             </button>
           </form>
 
@@ -101,16 +104,21 @@ export default function Login() {
               {demoLogins.map((d) => (
                 <button
                   key={d.label}
+                  type="button"
                   onClick={() => {
                     setEmail(d.email);
                     setPassword(d.password);
                   }}
+                  disabled={submitting}
                   className="text-xs px-2 py-2 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-400 hover:text-slate-200 transition-all border border-slate-700 font-body"
                 >
                   {d.label}
                 </button>
               ))}
             </div>
+            <p className="text-xs text-slate-600 mt-3 font-body text-center">
+              Click a role button to fill credentials, then Sign In
+            </p>
           </div>
         </div>
       </div>
