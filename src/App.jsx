@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState } from "react"; 
 import { BrowserRouter as Router, Routes, Route, Navigate } from "react-router-dom";
 import { AuthProvider, useAuth } from "./context/AuthContext";
 import Layout from "./components/Layout";
@@ -15,6 +15,7 @@ import CycleManager from "./pages/admin/CycleManager";
 import UserManager from "./pages/admin/UserManager";
 import AuditTrail from "./pages/admin/AuditTrail";
 import Analytics from "./pages/admin/Analytics";
+import Escalations from "./pages/admin/Escalations";
 
 function Spinner() {
   return (
@@ -49,6 +50,14 @@ function AppRoutes() {
         <Route path="users" element={<ProtectedRoute roles={["admin"]}><UserManager /></ProtectedRoute>} />
         <Route path="audit" element={<ProtectedRoute roles={["admin"]}><AuditTrail /></ProtectedRoute>} />
         <Route path="analytics" element={<ProtectedRoute roles={["admin","manager"]}><Analytics /></ProtectedRoute>} />
+        <Route
+          path="escalations"
+          element={
+            <ProtectedRoute roles={["admin"]}>
+              <Escalations />
+            </ProtectedRoute>
+          }
+        />
       </Route>
     </Routes>
   );

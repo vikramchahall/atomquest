@@ -11,11 +11,12 @@ export function AuthProvider({ children }) {
   useEffect(() => {
     let mounted = true;
 
+    // Get initial session ONCE
     supabase.auth.getSession().then(({ data: { session } }) => {
       if (!mounted) return;
       if (session?.user) {
         setUser(session.user);
-        fetchProfile(session.user).finally(() => {
+        fetchProfile(session.user).then(() => {
           if (mounted) setLoading(false);
         });
       } else {
@@ -25,15 +26,18 @@ export function AuthProvider({ children }) {
       if (mounted) setLoading(false);
     });
 
+    // Listen for changes but NEVER set loading=true here
     const { data: listener } = supabase.auth.onAuthStateChange((_event, session) => {
       if (!mounted) return;
-      if (session?.user) {
-        setUser(session.user);
-        fetchProfile(session.user);
-      } else {
+      if (_event === "SIGNED_OUT") {
         setUser(null);
         setProfile(null);
-        setLoading(false);
+        // loading stays false
+        return;
+      }
+      if (_event === "SIGNED_IN" && session?.user) {
+        setUser(session.user);
+        fetchProfile(session.user);
       }
     });
 
@@ -45,7 +49,7 @@ export function AuthProvider({ children }) {
 
   async function fetchProfile(authUser) {
     try {
-      const { data, error } = await supabase
+      const { data } = await supabase
         .from("profiles")
         .select("*")
         .eq("id", authUser.id)
@@ -56,7 +60,7 @@ export function AuthProvider({ children }) {
         return;
       }
 
-      // Profile missing — create it now
+      // No profile row — create one
       const fallback = {
         id: authUser.id,
         email: authUser.email,
@@ -65,17 +69,10 @@ export function AuthProvider({ children }) {
         manager_id: null,
         department: null,
       };
-
-      const { data: inserted } = await supabase
-        .from("profiles")
-        .upsert(fallback, { onConflict: "id" })
-        .select()
-        .single();
-
-      setProfile(inserted || fallback);
+      await supabase.from("profiles").upsert(fallback, { onConflict: "id" });
+      setProfile(fallback);
     } catch (err) {
-      console.error("fetchProfile failed:", err);
-      // Set minimal fallback so app doesn't hang
+      console.error("fetchProfile:", err);
       setProfile({
         id: authUser.id,
         email: authUser.email,
@@ -88,18 +85,18 @@ export function AuthProvider({ children }) {
   }
 
   async function signIn(email, password) {
-    setLoading(true);
     const result = await supabase.auth.signInWithPassword({ email, password });
-    if (result.error) {
-      setLoading(false);
+    if (!result.error && result.data?.user) {
+      setUser(result.data.user);
+      await fetchProfile(result.data.user);
     }
     return result;
   }
 
   async function signOut() {
-    await supabase.auth.signOut();
     setUser(null);
     setProfile(null);
+    await supabase.auth.signOut();
   }
 
   return (
