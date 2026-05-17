@@ -25,6 +25,7 @@ export function AuthProvider({ children }) {
   useEffect(() => {
     let mounted = true;
 
+<<<<<<< HEAD
     async function init() {
       try {
         const { data: { session } } = await supabase.auth.getSession();
@@ -63,6 +64,37 @@ export function AuthProvider({ children }) {
         }
       }
     );
+=======
+    // Get initial session ONCE
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      if (!mounted) return;
+      if (session?.user) {
+        setUser(session.user);
+        fetchProfile(session.user).then(() => {
+          if (mounted) setLoading(false);
+        });
+      } else {
+        setLoading(false);
+      }
+    }).catch(() => {
+      if (mounted) setLoading(false);
+    });
+
+    // Listen for changes but NEVER set loading=true here
+    const { data: listener } = supabase.auth.onAuthStateChange((_event, session) => {
+      if (!mounted) return;
+      if (_event === "SIGNED_OUT") {
+        setUser(null);
+        setProfile(null);
+        // loading stays false
+        return;
+      }
+      if (_event === "SIGNED_IN" && session?.user) {
+        setUser(session.user);
+        fetchProfile(session.user);
+      }
+    });
+>>>>>>> af0a011c438a0839557bcb4c0dbac33927325901
 
     return () => {
       mounted = false;
@@ -83,6 +115,7 @@ export function AuthProvider({ children }) {
         return;
       }
 
+<<<<<<< HEAD
       // First login — create profile
       const fallback = {
         id: authUser.id,
@@ -96,6 +129,17 @@ export function AuthProvider({ children }) {
         department: null,
       };
 
+=======
+      // No profile row — create one
+      const fallback = {
+        id: authUser.id,
+        email: authUser.email,
+        full_name: authUser.user_metadata?.full_name || authUser.email.split("@")[0],
+        role: authUser.user_metadata?.role || "employee",
+        manager_id: null,
+        department: null,
+      };
+>>>>>>> af0a011c438a0839557bcb4c0dbac33927325901
       await supabase.from("profiles").upsert(fallback, { onConflict: "id" });
       setProfile(fallback);
     } catch (err) {

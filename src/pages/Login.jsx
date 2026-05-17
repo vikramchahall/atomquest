@@ -20,7 +20,10 @@ export default function Login() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [submitting, setSubmitting] = useState(false);
+<<<<<<< HEAD
   const [azureLoading, setAzureLoading] = useState(false);
+=======
+>>>>>>> af0a011c438a0839557bcb4c0dbac33927325901
   const [showPw, setShowPw] = useState(false);
   const [showEmailForm, setShowEmailForm] = useState(false);
   const { signIn, user } = useAuth();
@@ -40,6 +43,7 @@ export default function Login() {
     setSubmitting(true);
     const { error } = await signIn(email, password);
     if (error) {
+<<<<<<< HEAD
       toast.error(error.message || "Sign in failed. Check your credentials.");
       setSubmitting(false);
     } else {
@@ -59,13 +63,25 @@ export default function Login() {
     } catch (err) {
       toast.error("Microsoft sign-in failed");
       setAzureLoading(false);
+=======
+      toast.error(error.message || "Sign in failed.");
+      setSubmitting(false);
+    } else {
+      navigate("/", { replace: true });
+>>>>>>> af0a011c438a0839557bcb4c0dbac33927325901
     }
   };
 
   const demoLogins = [
+<<<<<<< HEAD
     { label: "Employee", email: "employee@demo.com", password: "demo1234", color: "text-brand-400" },
     { label: "Manager",  email: "manager@demo.com",  password: "demo1234", color: "text-accent-400" },
     { label: "Admin",    email: "admin@demo.com",    password: "demo1234", color: "text-purple-400" },
+=======
+    { label: "Employee", email: "employee@demo.com", password: "demo1234" },
+    { label: "Manager", email: "manager@demo.com", password: "demo1234" },
+    { label: "Admin", email: "admin@demo.com", password: "demo1234" },
+>>>>>>> af0a011c438a0839557bcb4c0dbac33927325901
   ];
 
   return (
@@ -75,12 +91,19 @@ export default function Login() {
         <div className="absolute bottom-1/4 right-1/4 w-96 h-96 bg-accent-500/5 rounded-full blur-3xl" />
         <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-64 h-64 bg-purple-500/3 rounded-full blur-3xl" />
       </div>
+<<<<<<< HEAD
 
       <div className="w-full max-w-md relative animate-fade-in">
         {/* Logo */}
         <div className="text-center mb-8">
           <div className="inline-flex w-16 h-16 rounded-2xl bg-gradient-to-br from-brand-500 to-accent-500 items-center justify-center mb-5 shadow-2xl shadow-brand-500/30">
             <Zap size={30} className="text-white" />
+=======
+      <div className="w-full max-w-md relative">
+        <div className="text-center mb-10">
+          <div className="inline-flex w-14 h-14 rounded-2xl bg-gradient-to-br from-brand-500 to-accent-500 items-center justify-center mb-4 shadow-lg shadow-brand-500/25">
+            <Zap size={26} className="text-white" />
+>>>>>>> af0a011c438a0839557bcb4c0dbac33927325901
           </div>
           <h1 className="font-display font-800 text-4xl text-slate-100 tracking-tight">
             AtomQuest
@@ -89,6 +112,7 @@ export default function Login() {
             Goal Setting & Performance Portal
           </p>
         </div>
+<<<<<<< HEAD
 
         <div className="card space-y-5">
           {/* Microsoft SSO */}
@@ -154,6 +178,47 @@ export default function Login() {
             <p className="text-xs text-slate-600 mt-2 font-body text-center">
               Click role → credentials fill → Sign In below
             </p>
+=======
+        <div className="card">
+          <h2 className="font-display font-700 text-xl text-slate-100 mb-6">Sign In</h2>
+          <form onSubmit={handleLogin} className="space-y-4">
+            <div>
+              <label className="label">Email Address</label>
+              <input type="email" value={email} onChange={e => setEmail(e.target.value)}
+                placeholder="you@company.com" className="input-field" required disabled={submitting} />
+            </div>
+            <div>
+              <label className="label">Password</label>
+              <div className="relative">
+                <input type={showPw ? "text" : "password"} value={password}
+                  onChange={e => setPassword(e.target.value)} placeholder="••••••••"
+                  className="input-field pr-10" required disabled={submitting} />
+                <button type="button" onClick={() => setShowPw(!showPw)}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-500 hover:text-slate-300">
+                  {showPw ? <EyeOff size={16} /> : <Eye size={16} />}
+                </button>
+              </div>
+            </div>
+            <button type="submit" disabled={submitting}
+              className="btn-primary w-full flex items-center justify-center gap-2 mt-2">
+              {submitting && <span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />}
+              {submitting ? "Signing in..." : "Sign In"}
+            </button>
+          </form>
+          <div className="mt-6 pt-6 border-t border-slate-800">
+            <p className="text-xs text-slate-500 font-body mb-3">Quick Demo Access</p>
+            <div className="grid grid-cols-3 gap-2">
+              {demoLogins.map(d => (
+                <button key={d.label} type="button"
+                  onClick={() => { setEmail(d.email); setPassword(d.password); }}
+                  disabled={submitting}
+                  className="text-xs px-2 py-2 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-400 hover:text-slate-200 transition-all border border-slate-700 font-body">
+                  {d.label}
+                </button>
+              ))}
+            </div>
+            <p className="text-xs text-slate-600 mt-3 font-body text-center">Click a role to fill, then Sign In</p>
+>>>>>>> af0a011c438a0839557bcb4c0dbac33927325901
           </div>
 
           {/* Email form */}

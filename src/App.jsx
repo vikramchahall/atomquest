@@ -1,10 +1,5 @@
-import React from "react";
-import {
-  BrowserRouter as Router,
-  Routes,
-  Route,
-  Navigate,
-} from "react-router-dom";
+import React, { useEffect, useState } from "react"; 
+import { BrowserRouter as Router, Routes, Route, Navigate } from "react-router-dom";
 import { AuthProvider, useAuth } from "./context/AuthContext";
 import Layout from "./components/Layout";
 import Login from "./pages/Login";
@@ -25,11 +20,16 @@ import Escalations from "./pages/admin/Escalations";
 
 function Spinner() {
   return (
+<<<<<<< HEAD
     <div className="flex items-center justify-center h-screen bg-dark-950">
       <div className="text-center space-y-3">
         <div className="w-8 h-8 border-2 border-brand-500 border-t-transparent rounded-full animate-spin mx-auto" />
         <p className="text-slate-600 font-body text-xs">Loading...</p>
       </div>
+=======
+    <div className="flex items-center justify-center h-screen">
+      <div className="w-8 h-8 border-2 border-brand-500 border-t-transparent rounded-full animate-spin" />
+>>>>>>> af0a011c438a0839557bcb4c0dbac33927325901
     </div>
   );
 }
@@ -38,8 +38,12 @@ function ProtectedRoute({ children, roles }) {
   const { user, profile, loading } = useAuth();
   if (loading) return <Spinner />;
   if (!user) return <Navigate to="/login" replace />;
+<<<<<<< HEAD
   if (roles && profile && !roles.includes(profile.role))
     return <Navigate to="/" replace />;
+=======
+  if (roles && profile && !roles.includes(profile.role)) return <Navigate to="/" replace />;
+>>>>>>> af0a011c438a0839557bcb4c0dbac33927325901
   return children;
 }
 
@@ -48,6 +52,7 @@ function AppRoutes() {
     <Routes>
       {/* Public */}
       <Route path="/login" element={<Login />} />
+<<<<<<< HEAD
       <Route path="/auth/callback" element={<AuthCallback />} />
 
       {/* Protected shell */}
@@ -161,6 +166,26 @@ function AppRoutes() {
           element={
             <ProtectedRoute roles={["admin", "manager"]}>
               <Analytics />
+=======
+      <Route path="/" element={<ProtectedRoute><Layout /></ProtectedRoute>}>
+        <Route index element={<Dashboard />} />
+        <Route path="my-goals" element={<ProtectedRoute roles={["employee","manager","admin"]}><MyGoals /></ProtectedRoute>} />
+        <Route path="create-goal" element={<ProtectedRoute roles={["employee","manager"]}><CreateGoal /></ProtectedRoute>} />
+        <Route path="quarterly-update" element={<ProtectedRoute roles={["employee","manager"]}><QuarterlyUpdate /></ProtectedRoute>} />
+        <Route path="team" element={<ProtectedRoute roles={["manager","admin"]}><TeamDashboard /></ProtectedRoute>} />
+        <Route path="approve" element={<ProtectedRoute roles={["manager","admin"]}><ApproveGoals /></ProtectedRoute>} />
+        <Route path="checkin/:employeeId" element={<ProtectedRoute roles={["manager","admin"]}><CheckIn /></ProtectedRoute>} />
+        <Route path="admin" element={<ProtectedRoute roles={["admin"]}><AdminDashboard /></ProtectedRoute>} />
+        <Route path="cycles" element={<ProtectedRoute roles={["admin"]}><CycleManager /></ProtectedRoute>} />
+        <Route path="users" element={<ProtectedRoute roles={["admin"]}><UserManager /></ProtectedRoute>} />
+        <Route path="audit" element={<ProtectedRoute roles={["admin"]}><AuditTrail /></ProtectedRoute>} />
+        <Route path="analytics" element={<ProtectedRoute roles={["admin","manager"]}><Analytics /></ProtectedRoute>} />
+        <Route
+          path="escalations"
+          element={
+            <ProtectedRoute roles={["admin"]}>
+              <Escalations />
+>>>>>>> af0a011c438a0839557bcb4c0dbac33927325901
             </ProtectedRoute>
           }
         />
