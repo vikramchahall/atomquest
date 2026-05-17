@@ -4,21 +4,18 @@
 
 @layer base {
   html {
-    font-size: 16px; /* force consistent base size */
-    -webkit-text-size-adjust: 100%; /* prevents iOS from auto-scaling */
-    text-size-adjust: 100%;
+    font-size: 16px !important;
+    -webkit-text-size-adjust: none;
+    text-size-adjust: none;
   }
 
   body {
     @apply bg-dark-950 text-slate-100 font-body antialiased;
-    font-size: 1rem;
-    line-height: 1.5;
+    font-size: 16px !important;
+    min-width: 320px;
   }
 
-  h1,
-  h2,
-  h3,
-  h4 {
+  h1, h2, h3, h4 {
     @apply font-display;
   }
 }
@@ -27,53 +24,33 @@
   .card {
     @apply bg-dark-900 border border-slate-800 rounded-2xl p-6 shadow-xl;
   }
-
   .btn-primary {
-    @apply bg-brand-500 hover:bg-brand-600 text-white font-display font-semibold px-5 py-2.5 rounded-xl transition-all duration-200 hover:shadow-lg hover:shadow-brand-500/25 active:scale-95;
+    @apply bg-brand-500 hover:bg-brand-600 text-white font-display font-600 px-5 py-2.5 rounded-xl transition-all duration-200 hover:shadow-lg hover:shadow-brand-500/25 active:scale-95;
   }
-
   .btn-secondary {
     @apply bg-slate-800 hover:bg-slate-700 text-slate-200 font-body px-5 py-2.5 rounded-xl transition-all duration-200 border border-slate-700;
   }
-
   .btn-danger {
     @apply bg-red-500/10 hover:bg-red-500/20 text-red-400 border border-red-500/30 px-5 py-2.5 rounded-xl transition-all duration-200;
   }
-
   .input-field {
     @apply w-full bg-slate-800/50 border border-slate-700 rounded-xl px-4 py-3 text-slate-100 placeholder-slate-500 focus:outline-none focus:border-brand-500 focus:ring-2 focus:ring-brand-500/20 transition-all duration-200;
   }
-
   .label {
-    @apply block text-sm font-body font-medium text-slate-400 mb-1.5;
+    @apply block text-sm font-body font-500 text-slate-400 mb-1.5;
   }
-
   .sidebar-link {
     @apply flex items-center gap-3 px-4 py-3 rounded-xl text-slate-400 hover:text-slate-100 hover:bg-slate-800 transition-all duration-200 font-body text-sm;
   }
-
   .sidebar-link.active {
     @apply bg-brand-500/10 text-brand-400 border border-brand-500/20;
   }
-
   .tag {
-    @apply inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-body font-medium;
+    @apply inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-body font-500;
   }
 }
 
-::-webkit-scrollbar {
-  width: 6px;
-}
-
-::-webkit-scrollbar-track {
-  background: #0f172a;
-}
-
-::-webkit-scrollbar-thumb {
-  background: #334155;
-  border-radius: 3px;
-}
-
-::-webkit-scrollbar-thumb:hover {
-  background: #475569;
-}
+::-webkit-scrollbar { width: 6px; }
+::-webkit-scrollbar-track { background: #0f172a; }
+::-webkit-scrollbar-thumb { background: #334155; border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: #475569; }
